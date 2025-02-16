@@ -78,7 +78,7 @@ class Report:
         # Validate the status input
         if not _validator.check_string_type(status) or _validator.convert_type(status) == "Unknown value":
             return jsonify({"error": True, "message": "status isn't valid type or valid value"}), 500
-        
+         
         # Retrieve claim data based on status
         result = _db_query.get_claim_data_report(_validator.convert_type(status))
         # Create the CSV report using Celery
@@ -136,15 +136,25 @@ class ClaimRoutes:
         status = request.args.get('status')
         diagnosis_code = request.args.get('diagnosis_code')
         procedure_code = request.args.get('procedure_code')
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 10))
-        
+        page = request.args.get('page')
+        per_page = request.args.get('per_page')
+
+        # Check if all required parameters are provided
+        if not (status and diagnosis_code and procedure_code and page and per_page):
+            return jsonify({"error": True, "message": "All parameters must be provided"}), 400
         # Validate the input values
-        if not _validator.check_null_values(status, diagnosis_code, procedure_code, page, per_page):
-            if not _validator.check_int_type(diagnosis_code, procedure_code, page, per_page) or not _validator.check_string_type(status):
-                return jsonify({"error": True, "message": "One of the values is not of the correct type"}), 500
-        
-        print(_validator.convert_type(status), diagnosis_code, procedure_code, int(per_page), int(page))
+        try:
+            page = int(page)
+            per_page = int(per_page)
+        except ValueError:
+            return jsonify({"error": True, "message": "page and per_page must be integers"}), 500
+
+        if not _validator.check_string_type(status):
+            return jsonify({"error": True, "message": "status must be a string"}), 400
+        if not _validator.check_int_type(diagnosis_code, procedure_code, page, per_page):
+            return jsonify({"error": True, "message": "diagnosis_code, procedure_code, page, and per_page must be integers"}), 400
+        if _validator.convert_type(status) == "Unknown value":
+            return jsonify({"error": True, "message": "status value isn't valid"}), 400
         # Retrieve claim data with the specified filters
         result = _db_query.get_claim_data(per_page, page, diagnosis_code, procedure_code, _validator.convert_type(status))
         return jsonify({"success": result[0], "message": result[1]}), 200 if result[0] else 500
@@ -158,7 +168,8 @@ class ClaimRoutes:
         diagnosis_code = request.json.get('diagnosis_code')
         procedure_code = request.json.get('procedure_code')
         claim_amount = request.json.get('claim_amount')
-        
+        if not (patient_name and diagnosis_code and procedure_code and claim_amount):
+            return jsonify({"error": True, "message": "All data must be provided"}), 400
         # Validate the input values
         if _validator.check_null_values(patient_name, diagnosis_code, procedure_code, claim_amount):
             return jsonify({"error": "Missing values"}), 400
