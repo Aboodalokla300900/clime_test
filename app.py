@@ -40,13 +40,12 @@ class Report:
     def check_job_id(task_id):
         # Return the status of the job and download link
         if task_id in jobs:
-            if jobs[task_id] is None:
+            if str(jobs[task_id])=="completed":
                 return jsonify({"status": jobs[task_id], "link": f"http://localhost:5000/download/{task_id}"})
             else:
                 return jsonify({"status": jobs[task_id]})
         else:
             return jsonify({"message": "Cannot find job ID"}), 404
-
     # Celery task to create CSV report
     @celery.task(bind=True)
     def create_csv_report(self, data):
@@ -66,8 +65,6 @@ class Report:
         except Exception as e:
             # Update job status to failed in case of error
             jobs[job_id] = 'failed'
-            print(f"Error occurred while writing CSV: {e}")
-        
         return job_id
 
     # Endpoint to generate the report
@@ -83,7 +80,6 @@ class Report:
         result = _db_query.get_claim_data_report(_validator.convert_type(status))
         # Create the CSV report using Celery
         task_id = Report.create_csv_report(result[1])
-        print(result[1])
         return jsonify({"success": result[0], "task_id": task_id}), 200 if result[0] else 500
 
 class ClaimRoutes:
