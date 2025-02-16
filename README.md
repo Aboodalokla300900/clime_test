@@ -56,7 +56,7 @@ curl -X POST http://localhost:5000/claims \
         "claim_amount": <claim_amount>"
     }'
 ```
-**Description** Log in a user and get a JWT token.
+Log in a user and get a JWT token.
 ```bash
 curl -X POST http://localhost:5000/auth/login \
     -H "Content-Type: application/json" \
