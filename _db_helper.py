@@ -207,7 +207,7 @@ def _init__db():
         diagnosis_code INT NOT NULL,
         procedure_code INT NOT NULL,
         claim_amount REAL NOT NULL,
-        status INTEGER NOT NULL DEFAULT 0,
+        status INTEGER NOT NULL DEFAULT 2,
         submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS users (
